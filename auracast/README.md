@@ -12,8 +12,7 @@ Assistant, so it shows up in Music Assistant by itself and needs nothing enabled
 
 - A Music Assistant whose Sendspin support is built on aiosendspin 10 or later.
 - A Bluetooth LE Audio controller flashed for Auracast, connected to this machine. An ordinary
-  Bluetooth dongle, or the computer's built-in Bluetooth, will not work. See the
-  [Auracast page](https://music-assistant.io/player-support/auracast/) for the tested controllers.
+  Bluetooth dongle, or the computer's built-in Bluetooth, will not work.
 - Music Assistant and this player on the same local network.
 
 ## Getting started
