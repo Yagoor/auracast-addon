@@ -1,0 +1,46 @@
+name: Auracast
+version: "0.1.0"
+slug: auracast
+description: >-
+  Turns a Bluetooth LE Audio controller on this Home Assistant system into a
+  synchronized Sendspin player for Music Assistant that broadcasts over Auracast.
+url: https://github.com/Yagoor/auracast-addon
+image: ghcr.io/yagoor/auracast-addon
+arch:
+  - amd64
+  - aarch64
+stage: experimental
+# Before Home Assistant, so a player that belongs to a group is already
+# advertising by the time Music Assistant starts looking for it.
+startup: services
+# The image brings its own s6-overlay v3 init.
+init: false
+# The mDNS advertisement, and the inbound websocket the server connects back in
+# on, both need the host's network namespace.
+host_network: true
+# Maps the host's serial devices in, which is how the Bluetooth controller is
+# reached. No audio is mapped: the sound goes over the air, not to a sound card.
+uart: true
+options:
+  # Empty rather than absent, so the configuration screen shows the field
+  # instead of folding it away as unused. An empty name is the default,
+  # "Auracast".
+  name: ""
+  log_level: info
+# `auracast_controller` has no `?`, so the Supervisor will not start the app
+# until a controller is selected.
+#
+# `broadcast_name`, `baudrate`, `buffer_ms`, `manufacturer_data` and `allow_unpaired` are
+# optional with no default on purpose, which keeps them out of `options:` above and so behind the
+# fold a user has to open deliberately. An unset `broadcast_name` is the player name, an unset
+# `baudrate` is 1000000, an unset `buffer_ms` is 250, and an unset `manufacturer_data` adds
+# nothing to the broadcast.
+schema:
+  name: str?
+  auracast_controller: device(subsystem=tty)
+  broadcast_name: str?
+  baudrate: int(9600,4000000)?
+  buffer_ms: int(50,800)?
+  manufacturer_data: str?
+  log_level: list(debug|info|warning|error)
+  allow_unpaired: bool?

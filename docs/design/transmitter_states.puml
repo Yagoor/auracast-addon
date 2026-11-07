@@ -1,0 +1,23 @@
+@startuml transmitter_states
+title Transmitter: Phase state machine (python-statemachine)
+skinparam shadowing false
+hide empty description
+
+[*] --> IDLE
+
+IDLE : Sends a frame of silence whenever the\ncontroller queue is below 80 ms.\nKeeps the broadcast alive between streams.
+BUFFERING : Sends nothing.\nWaits for the prebuffer (Audio buffer option).\nAlso where a stream ends up when its audio runs dry,\nso receivers conceal the gap instead of decoding silence.
+PLAYING : Sends one frame of audio, with volume and\nmute applied, whenever the controller queue\nis below 80 ms.
+
+IDLE --> BUFFERING : begin\n(feed(): first audio of a stream)
+BUFFERING --> PLAYING : ready\n(buffered audio reaches the prebuffer)
+PLAYING --> BUFFERING : starve\n(buffer empty: underrun counted and logged)
+BUFFERING --> IDLE : reset\n(clear(): stream ended or seek)
+PLAYING --> IDLE : reset\n(clear(): stream ended or seek)
+
+legend bottom
+  Events that do not apply in the current state do nothing
+  (allow_event_without_transition), so callers can raise
+  begin on every chunk and reset whenever a stream ends.
+endlegend
+@enduml

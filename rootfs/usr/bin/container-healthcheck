@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The player listens for Music Assistant on this port whether or not a server is connected, so a
+# refused connection means the player itself is gone. The listener starts only after the
+# broadcast is up, so this also covers a controller that failed to open.
+exec 3<>/dev/tcp/127.0.0.1/8928

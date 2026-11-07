@@ -1,0 +1,6 @@
+# Only what the image is built from belongs in the build context.
+*
+!pyproject.toml
+!src
+!rootfs
+**/__pycache__

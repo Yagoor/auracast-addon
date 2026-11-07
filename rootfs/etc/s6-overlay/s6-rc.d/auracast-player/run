@@ -1,0 +1,6 @@
+#!/command/with-contenv bash
+set -euo pipefail
+
+# The player reads its options from /data/options.json, which the Supervisor writes, and keeps
+# its identity, pairing and broadcast details under /data too. Nothing needs rendering first.
+exec /opt/venv/bin/auracast-player

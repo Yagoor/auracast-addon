@@ -1,0 +1,145 @@
+name: Build
+
+# Every push to main and every pull request. Nothing here publishes anything: release.yml owns
+# that, and a `push` naming only `branches` does not fire for tags.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      # Every third-party action is pinned to a commit rather than a tag, because a tag can be
+      # repointed at any time. The trailing comment is the version that commit was.
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # actionlint's release binary, pinned by version and the sha256 its checksums file gives,
+      # checked before anything is unpacked. Recorded here because a `run:` script is invisible
+      # to Dependabot. It finds the runner's shellcheck on PATH and runs it over every `run:`.
+      - name: Lint the workflows
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          tarball="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            --output "$RUNNER_TEMP/$tarball" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/$tarball"
+          echo "$ACTIONLINT_SHA256  $RUNNER_TEMP/$tarball" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color
+
+      # shellcheck is the runner image's preinstall and floats with it.
+      - name: Lint the shell scripts
+        run: |
+          shellcheck --shell=bash \
+            rootfs/etc/s6-overlay/s6-rc.d/*/run \
+            rootfs/etc/s6-overlay/s6-rc.d/*/finish
+          shellcheck scripts/*.sh
+
+  python:
+    name: python
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # uv fetches the Python this project needs (3.14), which the runner image does not carry.
+      - name: Install the project and its dev tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv"
+          "$RUNNER_TEMP/uv/bin/pip" install --quiet uv
+          "$RUNNER_TEMP/uv/bin/uv" venv --python 3.14 .venv
+          "$RUNNER_TEMP/uv/bin/uv" pip install --python .venv/bin/python --quiet --editable '.[dev]'
+
+      - name: Lint
+        run: .venv/bin/ruff check .
+
+      - name: Check the formatting
+        run: .venv/bin/ruff format --check .
+
+      - name: Check the types
+        run: .venv/bin/mypy
+
+      - name: Test
+        run: .venv/bin/python -m pytest
+
+  # The add-on manifest is what the Home Assistant add-on store reads, and one the Supervisor
+  # rejects is a card that never appears, with no local symptom at all.
+  addon-lint:
+    name: add-on manifest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # `community` is left at its default: that branch demands a version of `dev` and a
+      # build.json, and this add-on has a real version and a prebuilt image.
+      - name: Lint the add-on manifest
+        uses: frenck/action-addon-linter@b9cfd1bc62ba60d2c4fc96317b5f7ada5923f4a7 # v2.21.1
+        with:
+          path: ./auracast
+
+  build:
+    name: ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      # Every leg's result, not just the first failure's.
+      fail-fast: false
+      matrix:
+        include:
+          # Native runners on both legs, so nothing here needs qemu. Both base digests are passed
+          # because the Dockerfile's default is the amd64 one. They move together with the
+          # Dockerfile and release.yml.
+          - arch: amd64
+            runner: ubuntu-24.04
+            base: ghcr.io/home-assistant/amd64-base-debian@sha256:9281ee991c28532ddae10114ac84750f4aca287a496f6e19583f3a750ad5e786
+            expect_arch: amd64
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+            base: ghcr.io/home-assistant/aarch64-base-debian@sha256:acc61c0ab60cbca176ec0fe4d37278be514a4a6babfc1becde951c99d17e92f0
+            expect_arch: arm64
+    env:
+      IMAGE: auracast:ci
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build the image
+        env:
+          BASE: ${{ matrix.base }}
+        run: docker build --build-arg "BUILD_FROM=$BASE" --tag "$IMAGE" .
+
+      - name: Check the image is the architecture this leg builds for
+        env:
+          EXPECT_ARCH: ${{ matrix.expect_arch }}
+        run: |
+          arch="$(docker image inspect --format '{{.Architecture}}' "$IMAGE")"
+          echo "image architecture: $arch"
+          [ "$arch" = "$EXPECT_ARCH" ] || {
+            echo "::error::built a $arch image on the $EXPECT_ARCH leg -- check BUILD_FROM"
+            exit 1
+          }
+
+      - name: Smoke test
+        run: scripts/smoke_test.sh "$IMAGE"

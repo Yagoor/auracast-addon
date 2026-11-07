@@ -1,0 +1,12 @@
+# github-actions is the one ecosystem Dependabot can follow here: `uses:` lines pinned to a commit
+# SHA move together with their trailing version comment.
+#
+# Pinned by hand on purpose: the per-architecture base image digests in the Dockerfile and both
+# workflows, and the actionlint version and checksum inside a `run:` script.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

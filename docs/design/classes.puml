@@ -1,0 +1,152 @@
+@startuml classes
+title Auracast player: class design (as built)
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontSize 12
+skinparam ClassBackgroundColor #FFFFFF
+hide empty members
+
+class "__main__" as Main <<composition root>> {
+  +main()
+  +run(options, state_dir)
+}
+
+package "config/ Configuration and state" #F4F4F4 {
+  class Options <<frozen dataclass>> {
+    +player_name, broadcast_name
+    +controller, baudrate
+    +buffer_ms, allow_unpaired
+    +manufacturer_data
+    +log_level
+  }
+  class PlayerState <<dataclass>> {
+    +device_address
+    +broadcast_id
+    +volume, muted
+    +output_delay_ms
+  }
+}
+
+package "sendspin/ Sendspin side" #E8F1FB {
+  class Pairing {
+    +configure(store, client_id)
+    +show_code(pairing_code, grouped)
+  }
+  interface AudioSink <<Protocol>> {
+    +feed(pcm)
+    +clear()
+  }
+  class SendspinPlayer {
+    +start()
+    +stop()
+    -_on_audio_chunk()
+    -_on_stream_dropped()
+    -_on_server_command()
+    -_on_output_delay()
+  }
+}
+
+package "audio/ Audio path" #EAF6E6 {
+  class Transmitter {
+    +phase: Phase
+    +underruns: int
+    +feed(pcm)
+    +clear()
+    +run() : paced to an 80 ms queue
+    -_next_frame()
+  }
+  class Phase <<StateMachine>> {
+    states: idle, buffering, playing
+    +begin()
+    +ready()
+    +starve()
+    +reset()
+    +underruns: int
+  }
+  class FrameBuffer {
+    +add(pcm)
+    +pop_frame()
+    +clear()
+  }
+  interface FrameSink <<Protocol>> {
+    +queued_seconds: float
+    +send_pcm(pcm)
+    +send_silence()
+  }
+}
+
+package "auracast/ Auracast side" #FCF1DE {
+  class AuracastBroadcaster {
+    +controller: ControllerInfo
+    +running
+    +queued_seconds
+    +start()
+    +stop()
+    +send_pcm(pcm)
+    +send_silence()
+  }
+  class BroadcastConfig <<dataclass>> {
+    +name, serial_port, baudrate
+    +manufacturer_data
+    +broadcast_id, device_address
+    +presentation_delay_us
+  }
+  class ControllerInfo <<frozen dataclass>> {
+    +manufacturer, model
+    +firmware, stack
+  }
+  class SerialHciSource {
+    +connection_lost()
+  }
+}
+
+' external libraries
+class SendspinClient <<aiosendspin>>
+class ClientListener <<aiosendspin>>
+class FileClientPairingStore <<aiosendspin>>
+class "Device, Big,\nIsoPacketStream" as Bumble <<bumble>>
+class "StateMachine" as Statemachine <<python-statemachine>>
+class "Encoder" as Lc3 <<lc3py>>
+class "serialx" as Serialx <<serialx>>
+
+' composition root
+Main ..> Options : load_options()
+Main ..> PlayerState : load_state()
+Main --> SendspinPlayer : creates
+Main --> Transmitter : creates
+Main --> AuracastBroadcaster : creates
+
+' sendspin side
+SendspinPlayer --> AudioSink : feed / clear
+Transmitter ..|> AudioSink
+SendspinPlayer --> PlayerState : volume, mute, delay
+SendspinPlayer ..> Options
+SendspinPlayer *-- SendspinClient
+SendspinPlayer *-- ClientListener
+SendspinPlayer *-- Pairing
+Pairing ..> FileClientPairingStore
+
+' audio path
+Transmitter *-- FrameBuffer
+Transmitter *-- Phase
+Transmitter --> PlayerState : reads volume, mute
+Transmitter --> FrameSink
+AuracastBroadcaster ..|> FrameSink
+
+' auracast side
+AuracastBroadcaster *-- BroadcastConfig
+AuracastBroadcaster --> ControllerInfo : reads from HCI
+AuracastBroadcaster ..> SerialHciSource : open_hci_transport()
+AuracastBroadcaster ..> Bumble
+AuracastBroadcaster ..> Lc3 : LC3 encode
+SerialHciSource ..> Serialx
+Phase --|> Statemachine
+
+note bottom of SendspinPlayer
+  Stops with a restart goodbye so the server
+  redials, and disconnects the client before
+  stopping the listener.
+end note
+
+@enduml

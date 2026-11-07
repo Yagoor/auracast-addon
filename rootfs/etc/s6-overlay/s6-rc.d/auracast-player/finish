@@ -1,0 +1,12 @@
+#!/command/with-contenv bash
+
+# $1 is the player's exit code, or 256 when a signal ended it -- what a container stop looks like
+# from here -- and both pass through untouched. An error exit halts the container instead of
+# letting s6 restart the player forever: the options cannot change between attempts, and the
+# Supervisor treats a running container as a healthy add-on no matter what is crash-looping
+# inside it. The reason is in the player's own log line just above this one.
+if [ "$1" -ne 0 ] && [ "$1" -ne 256 ]; then
+    echo "auracast-player exited ${1}; stopping the container." >&2
+    echo "$1" > /run/s6-linux-init-container-results/exitcode
+    exec /run/s6/basedir/bin/halt
+fi

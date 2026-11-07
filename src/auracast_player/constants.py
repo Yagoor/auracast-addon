@@ -1,0 +1,17 @@
+"""Constants for the Auracast player."""
+
+DEFAULT_PLAYER_NAME = "Auracast"
+DEFAULT_BAUDRATE = 1_000_000
+MIN_BAUDRATE = 9_600
+MAX_BAUDRATE = 4_000_000
+DEFAULT_BUFFER_MS = 250
+MIN_BUFFER_MS = 50
+MAX_BUFFER_MS = 800
+MIN_BROADCAST_NAME_BYTES = 4
+MAX_BROADCAST_NAME_BYTES = 32
+
+# The audio the player accepts from Sendspin, which is also what the broadcast carries
+SAMPLE_RATE = 48_000
+CHANNELS = 2
+BIT_DEPTH = 16
+FRAME_DURATION_MS = 10

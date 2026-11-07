@@ -1,0 +1,46 @@
+configuration:
+  name:
+    name: Player name
+    description: >-
+      The name this player shows up under in Music Assistant. Leave it empty and
+      it is called "Auracast".
+  auracast_controller:
+    name: Auracast controller
+    description: >-
+      The Bluetooth LE Audio controller that transmits the broadcast. It has to
+      be a controller flashed for Auracast, not an ordinary Bluetooth dongle.
+  broadcast_name:
+    name: Broadcast name
+    description: >-
+      The name headphones and speakers show when they look for a broadcast, 4 to
+      32 characters. Leave it empty to use the player name.
+  baudrate:
+    name: Serial baud rate
+    description: >-
+      How fast this app talks to the controller. Leave it empty unless the
+      controller's instructions name another rate; the default is 1000000.
+  buffer_ms:
+    name: Audio buffer
+    description: >-
+      How much audio the player collects before it starts transmitting, and again
+      after the audio runs dry, in milliseconds, between 50 and 800. The default
+      is 250. Raise it if you hear clicks or short dropouts, at the cost of a
+      slightly later start when a track begins.
+  manufacturer_data:
+    name: Manufacturer data
+    description: >-
+      Advanced, and most people can leave this empty. It adds a manufacturer ID
+      and custom data to the broadcast, which some receivers use. Enter it as
+      COMPANY_ID:HEX_DATA and separate several entries with a semicolon. Company
+      IDs are decimal unless you prefix them with 0x, for example 0x0059:0102.
+  log_level:
+    name: Log level
+    description: >-
+      How much this player writes to its log. Raise it to debug while chasing a
+      problem, and put it back afterwards.
+  allow_unpaired:
+    name: Let unpaired servers play
+    description: >-
+      Off by default, and best left off: a server has to pair with this player
+      before it can play on it. Turn it on only to let any server on your
+      network play here without pairing.
