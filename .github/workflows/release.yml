@@ -26,7 +26,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Check out
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
 
       - name: Check the tag names the version the add-on declares
         id: version
@@ -72,25 +72,25 @@ jobs:
           # The same bases, native runners and spellings as build.yml.
           - arch: amd64
             runner: ubuntu-24.04
-            base: ghcr.io/home-assistant/amd64-base-debian@sha256:9281ee991c28532ddae10114ac84750f4aca287a496f6e19583f3a750ad5e786
+            base: ghcr.io/home-assistant/amd64-base-debian:trixie-2026.08.0
             expect_arch: amd64
           - arch: aarch64
             runner: ubuntu-24.04-arm
-            base: ghcr.io/home-assistant/aarch64-base-debian@sha256:acc61c0ab60cbca176ec0fe4d37278be514a4a6babfc1becde951c99d17e92f0
+            base: ghcr.io/home-assistant/aarch64-base-debian:trixie-2026.08.0
             expect_arch: arm64
     steps:
       - name: Check out
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
 
       # ghcr.io only accepts lowercase repository names, and an owner's name need not be.
       - name: Name the image
         run: echo "REPO=ghcr.io/${GITHUB_REPOSITORY,,}" >>"$GITHUB_ENV"
 
       - name: Set up buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Log in to the registry
-        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        uses: docker/login-action@v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -145,7 +145,7 @@ jobs:
           printf '%s' "$DIGEST" >"digests/$ARCH"
 
       - name: Upload the digest
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: digest-${{ matrix.arch }}
           path: digests/
@@ -166,10 +166,10 @@ jobs:
         run: echo "REPO=ghcr.io/${GITHUB_REPOSITORY,,}" >>"$GITHUB_ENV"
 
       - name: Set up buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Download the digests
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: actions/download-artifact@v8.0.2
         with:
           path: digests
           merge-multiple: true
@@ -191,7 +191,7 @@ jobs:
           done
 
       - name: Log in to the registry
-        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        uses: docker/login-action@v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -229,7 +229,7 @@ jobs:
       TAG: ${{ github.ref_name }}
     steps:
       - name: Check out
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false

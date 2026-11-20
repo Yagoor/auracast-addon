@@ -1,9 +1,9 @@
 # Both stages start from the same Home Assistant Debian base, which ships s6-overlay v3. CI
-# overrides BUILD_FROM with the digest for the architecture it is building; those per-arch
-# digests live in .github/workflows and a bump must move all of them together. The digest is
-# per-architecture, not a multi-arch index: the image is whatever architecture BUILD_FROM names,
-# so build natively and pass the matching digest rather than cross-building.
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-debian@sha256:9281ee991c28532ddae10114ac84750f4aca287a496f6e19583f3a750ad5e786
+# overrides BUILD_FROM with the image for the architecture it is building; those per-arch
+# tags live in .github/workflows and a bump must move all of them together. The image is
+# per-architecture: the build is whatever architecture BUILD_FROM names, so build natively and
+# pass the matching image rather than cross-building.
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-debian:trixie-2026.08.0
 ARG UV_IMAGE=ghcr.io/astral-sh/uv:latest
 
 FROM ${UV_IMAGE} AS uv

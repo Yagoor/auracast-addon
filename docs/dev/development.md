@@ -60,20 +60,20 @@ The `Dockerfile` has two stages on the Home Assistant Debian base. The build sta
 uv-managed Python 3.14 into `/opt/python` and the project into `/opt/venv`, compiling lc3py; the
 final stage copies only `/opt` and `rootfs/`, and adds `libstdc++6`.
 
-`BUILD_FROM` is a per-architecture digest, not a multi-arch index, so build natively and pass the
-matching digest. The default is the amd64 one; on an ARM machine pass the aarch64 digest from the
+`BUILD_FROM` is a per-architecture image, so build natively and pass the matching one. The
+default is the amd64 one; on an ARM machine pass the aarch64 image from the
 matrix in `.github/workflows/build.yml`:
 
 ```sh
 # amd64: the Dockerfile's default base
 docker build --tag auracast:dev .
 
-# aarch64: pass the base digest from build.yml
-docker build --build-arg "BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian@sha256:…" --tag auracast:dev .
+# aarch64: pass the base image from build.yml
+docker build --build-arg "BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian:trixie-2026.08.0" --tag auracast:dev .
 ```
 
 ```{note}
-The base digests appear in the `Dockerfile`, `build.yml` and `release.yml`. Dependabot does not
+The base image tags appear in the `Dockerfile`, `build.yml` and `release.yml`. Dependabot does not
 follow them; a bump moves all of them together.
 ```
 

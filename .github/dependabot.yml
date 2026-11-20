@@ -1,7 +1,7 @@
-# github-actions is the one ecosystem Dependabot can follow here: `uses:` lines pinned to a commit
-# SHA move together with their trailing version comment.
+# github-actions is the one ecosystem Dependabot can follow here: `uses:` lines pinned to a release
+# tag.
 #
-# Pinned by hand on purpose: the per-architecture base image digests in the Dockerfile and both
+# Pinned by hand on purpose: the per-architecture base image tags in the Dockerfile and both
 # workflows, and the actionlint version and checksum inside a `run:` script.
 version: 2
 updates:
