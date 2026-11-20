@@ -1,0 +1,67 @@
+#include <tunables/global>
+
+# The Supervisor renames this profile to the add-on's ID when it loads it.
+profile auracast flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # s6-overlay, which starts and stops the player, as in Home Assistant's app template.
+  file,
+  signal (send) set=(kill,term,int,hup,cont),
+
+  /init ix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /run/{s6,s6-rc*,service}/** ix,
+  /package/** ix,
+  /command/** ix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /etc/s6-overlay/** rwix,
+  /run/{,**} rwk,
+  /dev/tty rw,
+  /tmp/** rwk,
+  /data/** rw,
+  # The healthcheck, which runs under this profile, connects to the player's port.
+  network inet stream,
+
+  # The player runs confined to what it needs: its Python, its options and state, the
+  # controller's serial port, and the network for mDNS and the Music Assistant connection.
+  /opt/venv/bin/auracast-player cx -> auracast_player,
+
+  profile auracast_player flags=(attach_disconnected,mediate_deleted) {
+    #include <abstractions/base>
+
+    signal (receive) peer=*_auracast,
+
+    network inet stream,
+    network inet6 stream,
+    network inet dgram,
+    network inet6 dgram,
+    # ifaddr lists the interfaces zeroconf advertises on through netlink.
+    network netlink raw,
+
+    /opt/venv/bin/auracast-player r,
+    /opt/venv/** mr,
+    /opt/python/** mrix,
+    # ctypes.util.find_library, used to load liblc3 and libc, asks ldconfig where they are.
+    /{usr/,}sbin/ldconfig{,.real} ix,
+    /etc/ld.so.cache r,
+    /etc/** r,
+
+    /data/ r,
+    /data/** rwk,
+    /tmp/** rwk,
+
+    # The controller, and the sysfs and udev entries that name its port and USB ID.
+    /dev/tty{ACM,USB,AMA,S}[0-9]* rwk,
+    /dev/serial/** r,
+    /sys/class/tty/ r,
+    /sys/class/tty/** r,
+    /sys/devices/** r,
+    /run/udev/data/** r,
+
+    @{PROC}/@{pid}/** r,
+    @{PROC}/sys/** r,
+  }
+}
