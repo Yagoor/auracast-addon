@@ -39,8 +39,8 @@ check "refuses a missing options file" 1 "Cannot read the add-on options" \
   --options /opt/test/nothing.json "${state[@]}"
 check "asks for a controller when none is selected" 1 "Select the Auracast controller" \
   --options /opt/test/no-controller.json "${state[@]}"
-# Reaching the serial port means the options parsed and the LC3 codec loaded.
-check "stops cleanly when the controller cannot be opened" 1 "The Auracast broadcast stopped" \
+# Reaching the controller check means the options parsed and the package imported.
+check "refuses a port that is not a supported controller" 1 "is not a serial port on this system" \
   --options /opt/test/missing-port.json "${state[@]}"
 
 [ "$failures" = 0 ] || {

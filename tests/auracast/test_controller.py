@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
-from auracast_player.auracast.controller import ControllerInfo
+from auracast_player.auracast import controller
+from auracast_player.auracast.controller import ControllerInfo, find_unsupported_controller
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def local_version(**overrides: int) -> SimpleNamespace:
@@ -37,3 +42,18 @@ def test_controller_info_copes_with_unknown_company_and_version() -> None:
 
     assert info.manufacturer is None
     assert info.model == "HCI version 99 controller"
+
+
+def test_find_unsupported_controller_checks_the_usb_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Accept the supported VID:PID, name any other, and refuse a path that is no port."""
+    ports = [
+        SimpleNamespace(resolved_device="/dev/ttyACM0", vid=0x2FE3, pid=0x0004),
+        SimpleNamespace(resolved_device="/dev/ttyACM1", vid=0x1915, pid=0x520F),
+        SimpleNamespace(resolved_device="/dev/ttyAMA0", vid=None, pid=None),
+    ]
+    monkeypatch.setattr(controller.serialx, "list_serial_ports", lambda: ports)
+
+    assert find_unsupported_controller("/dev/ttyACM0") is None
+    assert "1915:520F" in (find_unsupported_controller("/dev/ttyACM1") or "")
+    assert "not a USB device" in (find_unsupported_controller("/dev/ttyAMA0") or "")
+    assert "not a serial port" in (find_unsupported_controller("/dev/ttyUSB9") or "")

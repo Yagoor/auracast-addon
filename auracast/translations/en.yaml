@@ -8,7 +8,8 @@ configuration:
     name: Auracast controller
     description: >-
       The Bluetooth LE Audio controller that transmits the broadcast. It has to
-      be a controller flashed for Auracast, not an ordinary Bluetooth dongle.
+      be a controller flashed for Auracast, not an ordinary Bluetooth dongle. The
+      app only starts with a supported controller (USB ID 2FE3:0004).
   broadcast_name:
     name: Broadcast name
     description: >-
