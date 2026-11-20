@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- The app runs under its own AppArmor profile, which limits it to the controller, its own data
+  and the network, and raises its security rating from 4 to 5.
+
 ## 0.1.1
 
 - The app only starts with a supported Auracast controller (USB ID 2FE3:0004), and says which
