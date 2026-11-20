@@ -15,6 +15,7 @@ from aiosendspin.models import DeviceInfo
 
 from .audio.transmitter import Transmitter
 from .auracast.broadcaster import BROADCAST_ERRORS, AuracastBroadcaster, BroadcastConfig
+from .auracast.controller import find_unsupported_controller
 from .config.options import DEFAULT_OPTIONS_FILE, Options, OptionsError, load_options
 from .config.state import DEFAULT_STATE_DIR, load_state, save_state
 from .logs import configure_logging
@@ -98,6 +99,8 @@ def main() -> None:
         options = load_options(args.options)
     except OptionsError as err:
         sys.exit(f"Auracast player: {err}")
+    if problem := find_unsupported_controller(options.controller):
+        sys.exit(f"Auracast player: {problem}")
     configure_logging(options.log_level)
     try:
         asyncio.run(run(options, args.state_dir))

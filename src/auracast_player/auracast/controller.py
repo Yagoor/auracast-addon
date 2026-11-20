@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from typing import Any
 
+import serialx
 from bumble import device, hci
 from bumble.company_ids import COMPANY_IDENTIFIERS
 
 LOGGER = logging.getLogger(__name__)
+# USB (vendor ID, product ID) of the controllers the add-on is known to work with
+SUPPORTED_USB_IDS = frozenset({(0x2FE3, 0x0004)})
 REQUIRED_LE_FEATURES = {
     "LE Periodic Advertising": hci.LeFeatureMask.LE_PERIODIC_ADVERTISING,
     "LE Extended Advertising": hci.LeFeatureMask.LE_EXTENDED_ADVERTISING,
@@ -80,3 +84,24 @@ def _core_version(parameters: Any) -> str:
         LOGGER.debug("Bumble does not have a name for HCI version %d", parameters.hci_version)
         return f"HCI version {parameters.hci_version}"
     return f"Bluetooth Core {name.removeprefix('BLUETOOTH_CORE_').replace('_', '.')}"
+
+
+def find_unsupported_controller(path: str) -> str | None:
+    """
+    Explain why the serial port at ``path`` is not a supported controller, or return ``None``.
+
+    :param path: The controller's device path, such as a ``/dev/serial/by-id/`` link.
+    """
+    resolved = os.path.realpath(path)
+    for port in serialx.list_serial_ports():
+        if os.path.realpath(port.resolved_device) != resolved:
+            continue
+        if (port.vid, port.pid) in SUPPORTED_USB_IDS:
+            return None
+        usb_id = (
+            f"{port.vid:04X}:{port.pid:04X}"
+            if port.vid is not None and port.pid is not None
+            else "not a USB device"
+        )
+        return f"{path} ({usb_id}) is not a supported Auracast controller"
+    return f"{path} is not a serial port on this system"
