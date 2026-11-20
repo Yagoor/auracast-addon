@@ -5,7 +5,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
-from auracast_player.auracast import controller
 from auracast_player.auracast.controller import ControllerInfo, find_unsupported_controller
 
 if TYPE_CHECKING:
@@ -51,7 +50,7 @@ def test_find_unsupported_controller_checks_the_usb_id(monkeypatch: pytest.Monke
         SimpleNamespace(resolved_device="/dev/ttyACM1", vid=0x1915, pid=0x520F),
         SimpleNamespace(resolved_device="/dev/ttyAMA0", vid=None, pid=None),
     ]
-    monkeypatch.setattr(controller.serialx, "list_serial_ports", lambda: ports)
+    monkeypatch.setattr("serialx.list_serial_ports", lambda: ports)
 
     assert find_unsupported_controller("/dev/ttyACM0") is None
     assert "1915:520F" in (find_unsupported_controller("/dev/ttyACM1") or "")
