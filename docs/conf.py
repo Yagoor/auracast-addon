@@ -17,7 +17,7 @@ extensions = [
     "sphinxcontrib.plantuml",
 ]
 
-exclude_patterns = ["_build", "design/*.puml", "design/*.png"]
+exclude_patterns = ["_build", "design/*.puml"]
 
 # The diagrams are rendered from docs/design/*.puml on every build. CI points PLANTUML at its
 # pinned jar; locally the `plantuml` on the PATH is used.
