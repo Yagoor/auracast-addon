@@ -1,0 +1,6 @@
+/* PlantUML renders on white; keep the diagrams on a light card in dark mode too. */
+.plantuml img {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
