@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- The add-on has a documentation site, with a user guide and a developer guide:
+  https://yagoor.github.io/auracast-addon/
+
 ## 0.1.2
 
 - The app runs under its own AppArmor profile, which limits it to the controller, its own data

@@ -1,5 +1,5 @@
 name: Auracast
-version: "0.1.2"
+version: "0.2.0"
 slug: auracast
 description: >-
   Turns a Bluetooth LE Audio controller on this Home Assistant system into a
