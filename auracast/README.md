@@ -8,6 +8,9 @@ broadcast.
 The player is [Sendspin](https://sendspin-audio.com), the playback protocol built into Music
 Assistant, so it shows up in Music Assistant by itself and needs nothing enabled there.
 
+The [full documentation](https://yagoor.github.io/auracast-addon/) covers setup,
+troubleshooting and the internals.
+
 ## What you need
 
 - A Music Assistant whose Sendspin support is built on aiosendspin 10 or later.

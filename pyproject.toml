@@ -23,6 +23,13 @@ dev = [
   "pytest-asyncio>=0.25",
   "ruff>=0.8",
 ]
+# The documentation site, built by .github/workflows/pages.yml. Pinned exactly, like the runtime.
+docs = [
+  "furo==2025.12.19",
+  "myst-parser==5.2.0",
+  "sphinx==9.2.0",
+  "sphinxcontrib-plantuml==0.31",
+]
 
 [project.scripts]
 auracast-player = "auracast_player.__main__:main"

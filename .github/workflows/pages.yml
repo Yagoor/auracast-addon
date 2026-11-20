@@ -1,0 +1,94 @@
+name: Docs
+
+# Builds the Sphinx site in docs/ with warnings as errors, so a broken docstring or link fails a
+# pull request. A push to main, or a manual run, also deploys it to GitHub Pages, which needs the
+# repository's Pages source set to "GitHub Actions".
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/**
+      - src/**
+      - pyproject.toml
+      - .github/workflows/pages.yml
+  pull_request:
+    paths:
+      - docs/**
+      - src/**
+      - pyproject.toml
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+# One deployment at a time, and a newer pull request build replaces an older one. A deployment in
+# progress is left to finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7.0.1
+
+      # As in build.yml: autodoc imports the package, so it is installed with all its runtime
+      # dependencies, lc3py compiled from source included.
+      - name: Install the project and the docs tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv"
+          "$RUNNER_TEMP/uv/bin/pip" install --quiet uv
+          "$RUNNER_TEMP/uv/bin/uv" venv --python 3.14 .venv
+          "$RUNNER_TEMP/uv/bin/uv" pip install --python .venv/bin/python --quiet --editable '.[docs]'
+
+      # The diagrams are rendered from docs/design/*.puml during the build. The runner's Java
+      # runs a pinned PlantUML release, checked against its published digest, and Graphviz lays
+      # out the class diagram.
+      - name: Install PlantUML
+        env:
+          PLANTUML_VERSION: 1.2026.9
+          PLANTUML_SHA256: aa4a1d06f8911c4b842beff4828dd955be431692b631a312d04c0e9fab9581de
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends graphviz
+          jar="$RUNNER_TEMP/plantuml.jar"
+          curl -fsSL -o "$jar" \
+            "https://github.com/plantuml/plantuml/releases/download/v$PLANTUML_VERSION/plantuml-$PLANTUML_VERSION.jar"
+          echo "$PLANTUML_SHA256  $jar" | sha256sum --check --strict
+          echo "PLANTUML=java -Djava.awt.headless=true -jar $jar" >>"$GITHUB_ENV"
+
+      - name: Build the docs
+        run: .venv/bin/sphinx-build -W --keep-going -b html docs docs/_build/html
+
+      - name: Upload the site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: docs/_build/html
+
+  deploy:
+    name: deploy
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v5.0.1
