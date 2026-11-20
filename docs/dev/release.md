@@ -12,7 +12,7 @@ On every push to `main` and every pull request:
 | `lint` | actionlint (pinned version, verified by sha256) over the workflows; shellcheck over the s6 scripts and `scripts/*.sh`. |
 | `python` | Installs with uv on Python 3.14; ruff lint, ruff format check, mypy, pytest. |
 | `add-on manifest` | `frenck/action-addon-linter` on `auracast/`, because a manifest the Supervisor rejects is a store card that silently never appears. |
-| `amd64`, `aarch64` | Native runners, no qemu. Builds the image with the per-architecture base digest, checks the image architecture, runs the smoke test. |
+| `amd64`, `aarch64` | Native runners, no qemu. Builds the image with the per-architecture base image, checks the image architecture, runs the smoke test. |
 
 Every third-party action is pinned to a commit SHA with the version as a trailing comment;
 Dependabot updates them weekly.

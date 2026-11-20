@@ -28,7 +28,7 @@ jobs:
       # Every third-party action is pinned to a commit rather than a tag, because a tag can be
       # repointed at any time. The trailing comment is the version that commit was.
       - name: Check out
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
 
       # actionlint's release binary, pinned by version and the sha256 its checksums file gives,
       # checked before anything is unpacked. Recorded here because a `run:` script is invisible
@@ -60,7 +60,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
 
       # uv fetches the Python this project needs (3.14), which the runner image does not carry.
       - name: Install the project and its dev tools
@@ -90,12 +90,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
 
       # `community` is left at its default: that branch demands a version of `dev` and a
       # build.json, and this add-on has a real version and a prebuilt image.
       - name: Lint the add-on manifest
-        uses: frenck/action-addon-linter@d51677290aef26cdfc835271dd3c7343ce502809 # v2.21.2
+        uses: frenck/action-addon-linter@v2.21.2
         with:
           path: ./auracast
 
@@ -108,22 +108,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Native runners on both legs, so nothing here needs qemu. Both base digests are passed
+          # Native runners on both legs, so nothing here needs qemu. Both base tags are passed
           # because the Dockerfile's default is the amd64 one. They move together with the
           # Dockerfile and release.yml.
           - arch: amd64
             runner: ubuntu-24.04
-            base: ghcr.io/home-assistant/amd64-base-debian@sha256:9281ee991c28532ddae10114ac84750f4aca287a496f6e19583f3a750ad5e786
+            base: ghcr.io/home-assistant/amd64-base-debian:trixie-2026.08.0
             expect_arch: amd64
           - arch: aarch64
             runner: ubuntu-24.04-arm
-            base: ghcr.io/home-assistant/aarch64-base-debian@sha256:acc61c0ab60cbca176ec0fe4d37278be514a4a6babfc1becde951c99d17e92f0
+            base: ghcr.io/home-assistant/aarch64-base-debian:trixie-2026.08.0
             expect_arch: arm64
     env:
       IMAGE: auracast:ci
     steps:
       - name: Check out
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
 
       - name: Build the image
         env:
